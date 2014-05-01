@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Geggie Grid</title>
+    <link rel="stylesheet" href="./jqwidgets/styles/jqx.base.css" type="text/css" />        
+    <link rel="stylesheet" href="./jqwidgets/styles/jqx.classic.css" type="text/css" />
+    <link rel="stylesheet" href="./jqwidgets/styles/jqx.darkblue.css" type="text/css" />
+    <link rel="stylesheet" href="./jqwidgets/styles/jqx.energyblue.css" type="text/css" />
+    <script type="text/javascript" src="./scripts/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="./jqwidgets/jqxcore.js"></script>
+    <script type="text/javascript" src="./jqwidgets/jqxdata.js"></script> 
+    <script type="text/javascript" src="./jqwidgets/jqxbuttons.js"></script>
+    <script type="text/javascript" src="./jqwidgets/jqxscrollbar.js"></script>
+    <script type="text/javascript" src="./jqwidgets/jqxmenu.js"></script>
+    <script type="text/javascript" src="./jqwidgets/jqxgrid.js"></script>
+    <script type="text/javascript" src="./jqwidgets/jqxgrid.pager.js"></script>
+    <script type="text/javascript" src="./jqwidgets/jqxgrid.selection.js"></script> 
+    <script type="text/javascript" src="./jqwidgets/jqxwindow.js"></script>
+    <script type="text/javascript" src="./jqwidgets/jqxlistbox.js"></script>
+    <script type="text/javascript" src="./jqwidgets/jqxdropdownlist.js"></script>
+    <script type="text/javascript" src="./jqwidgets/jqxinput.js"></script>
+    <script type="text/javascript" src="./jqwidgets/jqxgrid.filter.js"></script>	
+	<script type="text/javascript" src="./jqwidgets/jqxgrid.sort.js"></script>	
+    <script type="text/javascript">
+            $(document).ready(function () {
+            // prepare the data
+            var theme = 'energyblue';
+            var row;
+            var source = 
+            {
+                 datatype: "json",
+                 datafields: [
+					 { name: 'id', type: 'int'},
+					 { name: 'lastname', type: 'string'},
+					 { name: 'firstname', type: 'string'},
+//					 { name: 'photo', type: 'string'},
+					 { name: 'phone', type: 'string'}
+                ],
+				id:  'id',
+                url: "invoke.php?table=employees&keyname=id",
+			//    localdata: data,
+				cache: false,
+				sortcolumn: 'lastname',
+			    sortdirection: 'asc',
+				filter: function()
+				{
+					// update the grid and send a request to the server.
+					$("#jqxgrid").jqxGrid('updatebounddata', 'filter');
+				},
+				sort: function()
+				{
+					// update the grid and send a request to the server.
+					$("#jqxgrid").jqxGrid('updatebounddata', 'sort');
+				},
+				root: 'Rows',
+				beforeprocessing: function(data)
+				{		
+					if (data != null)
+					{
+						source.totalrecords = data[0].TotalRows;
+				//		source.totalrecords = 11;					
+					}
+				},
+
+
+                deleterow: function (rowid, commit) {
+			        // synchronize with the server - send update command
+                    var data = "delete=true";
+					data = data + "&id=" + rowid + "&table=employees&keyname=id";
+					
+					$.ajax({
+						dataType: 'html',
+						url: 'invoke.php',
+						type: 'POST',
+						data: data,
+						success: function (data, status, xhr) {
+							// update command is executed.
+							commit(true);
+						}
+					})
+				},	
+	            addrow: function (rowid, rowdata, position, commit) {
+                    // synchronize with the server - send insert command
+					 var data = "insert=true&firstname=" + rowdata.firstname + "&lastname=" + rowdata.lastname + "&phone=" + rowdata.phone;
+   					data = data + "&table=employees&keyname=id";				 
+					
+					$.ajax({
+						dataType: 'html',
+						url: 'invoke.php',
+						type: 'POST',
+						data: data,
+						success: function (data, status, xhr) {
+							// update command is executed.
+							commit(true);
+						}
+					})
+                },	
+				//sg popup
+                updaterow: function (rowid, rowdata, commit) {
+			        // synchronize with the server - send update command
+                    var data = "update=true&firstname=" + rowdata.firstname + "&lastname=" + rowdata.lastname + "&phone=" + rowdata.phone;
+					data = data + "&id=" + rowid  + "&table=employees&keyname=id";
+					
+					$.ajax({
+						dataType: 'html',
+						url: 'invoke.php',
+						type: 'POST',
+						data: data,
+						success: function (data, status, xhr) {
+							// update command is executed.
+							commit(true);
+						}
+					});	
+					
+                }	
+				//sg
+            };		
+ //           var dataadapter = new $.jqx.dataAdapter(source);
+		    var dataadapter = new $.jqx.dataAdapter(source, {
+					loadError: function(xhr, status, error)
+					{
+						alert(error);
+					}
+				}
+			);
+
+			//sg popup
+            // initialize the input fields.
+            $("#firstname").jqxInput({width: 150, height: 23});
+            $("#lastname").jqxInput({width: 150, height: 23});
+      //      $("#photo").jqxInput({width: 150, height: 23});
+            $("#phone").jqxInput({width: 150, height: 23});
+        
+            var dataadapter = new $.jqx.dataAdapter(source);
+            var editrow = -1;
+	
+            // initialize jqxGrid
+            $("#jqxgrid").jqxGrid(
+            {		
+            	width: '50%',
+                source: dataadapter,
+                theme: theme,
+				filterable: true,
+				sortable: true,
+				autoheight: true,
+				pageable: true,
+				virtualmode: true,
+				rendergridrows: function(obj)
+				{
+					 return obj.data;    
+				},
+			    columns: [
+                      { text: 'ID', datafield: 'id', width: 0, hidden:true },
+                      { text: 'Last Name', datafield: 'lastname', width: 200 },
+                      { text: 'First Name', datafield: 'firstname', width: 180 },
+     //                 { text: 'Photo', datafield: 'photo', width: 100 },
+                      { text: 'Phone', datafield: 'phone', width: 125 }
+
+                      //sg popup
+                      
+    /*                  
+                      { text: 'Edit', datafield: 'Edit', columntype: 'button', cellsrenderer: function () {
+                          return "Edit";
+     					 }, buttonclick: function (row) {
+                          // open the popup window when the user clicks a button.
+                          editrow = row;
+                          var offset = $("#jqxgrid").offset();
+                          $("#popupWindow").jqxWindow({ position: { x: parseInt(offset.left) + 60, y: parseInt(offset.top) + 60 } });
+
+                          // get the clicked row's data and initialize the input fields.
+                          var dataRecord = $("#jqxgrid").jqxGrid('getrowdata', editrow);
+                          $("#firstname").val(dataRecord.firstname);
+                          $("#lastname").val(dataRecord.lastname);
+       //                   $("#photo").val(dataRecord.photo);
+                          $("#phone").val(dataRecord.phone);
+                       
+                          // show the popup window.
+                          $("#popupWindow").jqxWindow('open');
+                      }
+                    }
+    */                     
+                 ]
+			    
+            });
+
+            $("#addrowbutton").jqxButton({ theme: theme, width: 180, height: 30 });
+            $("#deleterowbutton").jqxButton({ theme: theme, width: 180, height: 30 });
+            $("#updaterowbutton").jqxButton({ theme: theme, width: 180, height: 30 });
+
+            // update row.
+	         $("#updaterowbutton").bind('click', function () {  
+	        	var selectedrowindex = $("#jqxgrid").jqxGrid('getselectedrowindex');
+	            var rowscount = $("#jqxgrid").jqxGrid('getdatainformation').rowscount;   
+	            editrow = selectedrowindex;
+	            var offset = $("#jqxgrid").offset();
+	            $("#popupWindow").jqxWindow({ position: { x: parseInt(offset.left) + 60, y: parseInt(offset.top) + 60 } });
+	
+	            // get the clicked row's data and initialize the input fields.
+	            var dataRecord = $("#jqxgrid").jqxGrid('getrowdata', editrow);
+	            $("#firstname").val(dataRecord.firstname);
+	            $("#lastname").val(dataRecord.lastname);
+	//                   $("#photo").val(dataRecord.photo);
+	            $("#phone").val(dataRecord.phone);
+	         
+	            // show the popup window.
+	            $("#popupWindow").jqxWindow('open');
+                
+            });
+
+	         $("#addrowbutton").bind('click', function () {  
+	                var rowscount = $("#jqxgrid").jqxGrid('getdatainformation').rowscount;
+	                var offset = $("#jqxgrid").offset();
+		            $("#popupWindow").jqxWindow({ position: { x: parseInt(offset.left) + 60, y: parseInt(offset.top) + 60 } });
+		
+		            // get the clicked row's data and initialize the input fields.
+		//            $("#jqxgrid").jqxGrid('addrow', null, rowscount+1);
+		            $("#firstname").val("");
+		            $("#lastname").val("");
+		//                   $("#photo").val(dataRecord.photo);
+		            $("#phone").val("");
+		         
+		            // show the popup window.
+		            $("#popupWindow").jqxWindow('open');
+	                
+	            });
+	            // delete row.
+	            $("#deleterowbutton").bind('click', function () {
+	                var selectedrowindex = $("#jqxgrid").jqxGrid('getselectedrowindex');
+	                var rowscount = $("#jqxgrid").jqxGrid('getdatainformation').rowscount;
+	                if (selectedrowindex >= 0 && selectedrowindex < rowscount) {
+	                    var id = $("#jqxgrid").jqxGrid('getrowid', selectedrowindex);
+	                    $("#jqxgrid").jqxGrid('deleterow', id);
+	                }
+	            });
+            
+            // sg popup - initialize the popup window and buttons.
+            $("#popupWindow").jqxWindow({
+                width: 280, resizable: false, isModal: true, autoOpen: false, cancelButton: $("#Cancel"), modalOpacity: 0.01           
+            });
+
+            $("#popupWindow").on('open', function () {
+                $("#firstname").jqxInput('selectAll');
+            });
+         
+            $("#Cancel").jqxButton();
+            $("#Save").jqxButton();
+
+            // update the edited row when the user clicks the 'Save' button.
+            $("#Save").click(function () {
+                if (editrow >= 0) {
+                    var row = { firstname: $("#firstname").val(), lastname: $("#lastname").val(), phone: $("#phone").val()};
+                    var rowID = $('#jqxgrid').jqxGrid('getrowid', editrow);
+                    $('#jqxgrid').jqxGrid('updaterow', rowID, row);
+                    $("#popupWindow").jqxWindow('close');
+                }
+                else {
+                	var newrow={}; //REINITIALISE OTHERWISE SUBSEQUENT POPUPS WILL HAVE PREVIOUS VALUE.
+                 	var newrow = { firstname: $("#firstname").val(), lastname: $("#lastname").val(), phone: $("#phone").val()};
+                	$("#jqxgrid").jqxGrid('addrow', null, newrow);       
+       	    //    	$("#jqxgrid").jqxGrid('updatebounddata'); 
+                	$("#jqxgrid").jqxGrid('refresh');    
+                	$("#popupWindow").jqxWindow('close');
+                }   
+            });
+            
+       });
+    </script>
+</head>
+<body class='default'>
+    <div align="center" id="jqxWidget">
+      <div align="center" id="jqxgrid" style="margin-top: 30px; float:  left;" ></div>
+       
+        <!-- sg popup -->  
+       <div style="margin-top: 30px; float:  left;">
+            <div id="cellbegineditevent"></div>
+      <!--     <div style="margin-top: 10px;" id="cellendeditevent"></div>  -->   
+       <!-- sg add, delete, update buttons -->
+       
+            <div style="margin: 10px;">
+                <input id="addrowbutton" type="button" value="Add New Row" />
+            </div>
+            <div style="margin-top: 10px;margin: 10px;">
+                <input id="deleterowbutton" type="button" value="Delete Selected Row" />
+            </div>
+            <div style="margin-top: 10px;margin: 10px">
+                <input id="updaterowbutton" type="button" value="Update Selected Row" />
+            </div>
+       </div>
+       
+            
+       <div id="popupWindow">
+            <div>Edit</div>
+            <div style="overflow: hidden;">
+                <table>
+                    <tr>
+                        <td align="right">First Name:</td>
+                        <td align="left"><input id="firstname" /></td>
+                    </tr>
+                    <tr>
+                        <td align="right">Last Name:</td>
+                        <td align="left"><input id="lastname" /></td>
+                    </tr>
+                    <tr>
+                        <td align="right">Phone:</td>
+                        <td align="left"><input id="phone"/></td>
+                    </tr>
+					<tr>
+                        <td align="right"></td>
+                        <td style="padding-top: 10px;" align="right"><input style="margin-right: 5px;" type="button" id="Save" value="Save" /><input id="Cancel" type="button" value="Cancel" /></td>
+                    </tr>          	
+                </table>
+            </div>
+       </div>
+        
+        <!-- sg popup --> 
+    </div> 
+</body>
+</html>
